@@ -97,21 +97,34 @@ class NetworkDevice {
         }
     }
 
+
+    /**
+     * find the network port id in the database and checks if is already connected to the correct switch.
+     * If not, it will be connected to the correct switch otherwise it will be ignored.
+     * If it is not connected to any switch, it will be connected to the correct switch.
+     */
     public static function connect(Port $switchPort, Port $endDevicePort): string {
         global $DB;
 
+        //get from database the switch port id and the end device port id based on end device id
         $query = "select networkports_id_1, networkports_id_2 "
                 . "from glpi_networkports_networkports "
                 . "where networkports_id_2 = " . $endDevicePort->glpiPortid;
 
         $resultSet = $DB->request($query);
         foreach ($resultSet as $row) {
+
+            //if nothig has changed, return
             if ($row["networkports_id_2"] == $endDevicePort->glpiPortid && $row["networkports_id_1"] == $switchPort->glpiPortid) {
                 return "skip";
-            } else if (isset($row["networkports_id_1"]) && isset($row["networkports_id_2"]) && $row["networkports_id_1"] != $switchPort->glpiPortid) {
+            }
+            //if the switch ports has changed, update to the new switch port
+            else if (isset($row["networkports_id_1"]) && isset($row["networkports_id_2"]) && $row["networkports_id_1"] != $switchPort->glpiPortid) {
                 $update = "update glpi_networkports_networkports set networkports_id_1 = " . $switchPort->glpiPortid
                         . " where networkports_id_2 = " . $endDevicePort->glpiPortid;
                 $result = $DB->query($update);
+
+                //get the switch port name and the hostname of the switch to log it
                 if ($result) {
                     $query = "select glpi_networkports.name as portname, glpi_networkequipments.name as hostname "
                             . " from glpi_networkports, glpi_networkequipments "
@@ -135,6 +148,7 @@ class NetworkDevice {
             }
         }
 
+        //if the switch port is not connected to the end device, connect it
         $result = $DB->insert(
                 "glpi_networkports_networkports",
                 [

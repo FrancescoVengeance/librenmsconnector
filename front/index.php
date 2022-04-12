@@ -57,7 +57,7 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
         echo "<h3>Esecuzione completata</h3>";
     }
 } else {
-    Html::helpHeader("NetDiscovery", $_SERVER['PHP_SELF']);
+    Html::helpHeader("LibrenmsConnector", $_SERVER['PHP_SELF']);
 }
 
 function execute() {
@@ -115,7 +115,7 @@ function execute() {
         }
     }
     else{
-        echo "<h4>Qualcosa è andato storto</h4>";
+        echo "<a href='../config.php'><h4>Something goes wrong. Check the configuration</h4></a>";
     }
 }
 

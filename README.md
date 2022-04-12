@@ -1,6 +1,8 @@
 # LibrenmsConnector GLPI plugin
 
-Add your plugin description here.
+A plugin for GLPI that allows to connect to LibreNMS, get data from it and import known devices 
+into GLPI connecting them to the right network equipment.
+
 
 ## Contributing
 

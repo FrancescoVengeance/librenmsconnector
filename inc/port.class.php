@@ -14,6 +14,7 @@ class Port implements Countable {
     var $uplinkHostname;
     var $vlan;
     var $glpiPortid;
+    var $uniqueMACs = array();
     static $fdb = null;
     static $links = null;
 
@@ -71,9 +72,10 @@ class Port implements Countable {
         $jsonFdb = self::getFDB();
         if (!empty($jsonFdb))
             foreach ($jsonFdb as $key => $value) {
-                if ($value["port_id"] == $this->portId) {
+                if ($value["port_id"] == $this->portId && !in_array($value["mac_address"], $this->uniqueMACs)) {
                     $mac = $value["mac_address"];
                     $this->connectedTo[] = self::endDevicePort($mac);
+                    $this->uniqueMACs[] = $mac;
                 }
             }
     }

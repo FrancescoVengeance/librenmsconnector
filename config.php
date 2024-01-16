@@ -36,8 +36,8 @@
 //header("Location:../../central.php");
 
 // Entry menu case
-const GLPI_ROOT = '../..';
-include (GLPI_ROOT . "/inc/includes.php");
+//const GLPI_ROOT = '../..';
+include ("../../inc/includes.php");//GLPI_ROOT . 
 include ("inc/apiconfig.class.php");
 Session::checkRight("config", UPDATE);
 

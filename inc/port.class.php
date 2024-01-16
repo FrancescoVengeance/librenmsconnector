@@ -11,9 +11,9 @@ class Port implements Countable {
     var $status;
     var $portId;
     var $uplink;
+    var $uplinkHostname;
     var $vlan;
     var $glpiPortid;
-
     static $fdb = null;
     static $links = null;
 
@@ -44,7 +44,7 @@ class Port implements Countable {
     private function findGlpiId($networkDevicePort) {
         if (isset($this->glpiNetworkDeviceId) && $networkDevicePort) {
             $port = new NetworkPort();
-            $fields = $port->find("items_id = '" . $this->glpiNetworkDeviceId . "' and name = '" . $this->name . "'");
+            $fields = $port->find(array("items_id = '" . $this->glpiNetworkDeviceId . "' and name = '" . $this->name . "'"));
             foreach ($fields as $field) {
                 if (isset($field["id"])) {
                     $this->glpiPortid = $field["id"];
@@ -55,7 +55,7 @@ class Port implements Countable {
             if (isset($this->mac)) {
 
                 $port = new NetworkPort();
-                $fields = $port->find("mac = '" . $this->mac . "'", [], 1);
+                $fields = $port->find(array("mac = '" . $this->mac . "'"), [], 1);
                 foreach ($fields as $field) {
                     if (isset($field["id"])) {
                         $this->glpiPortid = $field["id"];
@@ -85,6 +85,7 @@ class Port implements Countable {
                 $connectedTo = strtolower($value["remote_hostname"]);
                 if (in_array($connectedTo, $hostnames)) {
                     $this->uplink = true;
+                    $this->uplinkHostname = $connectedTo;
                 }
             }
         }
@@ -100,20 +101,21 @@ class Port implements Countable {
     }
 
     private static function getFDB(): array {
-        if(self::$fdb == null){
+        if (self::$fdb == null) {
             self::$fdb = ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"];
         }
         return self::$fdb;
     }
 
     private static function getLinks(): array {
-        if(self::$links == null){
+        if (self::$links == null) {
             self::$links = ApiConfig::getInstance()->executeQuery("resources/links")["links"];
         }
         return self::$links;
     }
 
-    public function count() {
+    public function count(): int {
         // TODO: Implement count() method.
+        return (int) count(self::$links);
     }
 }

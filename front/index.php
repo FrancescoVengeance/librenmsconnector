@@ -42,6 +42,7 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
 
     $token = Session::getNewCSRFToken();
     echo "<form method='post'>
+        <p><INPUT type='checkbox' name='debug_sync' value='1' " . ((isset($_POST["debug_sync"]) && $_POST["debug_sync"] == 1) ? 'checked' : '') . " > Debug data</p>
         <button class='save' name='execute' type='submit'><p>Run</p></button>
         <input type='hidden' name='_glpi_csrf_token' value='$token'>
     </form>";
@@ -61,15 +62,18 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
 }
 
 function execute() {
+    // Enable degug mode
+    $debug_sync = ($_POST["debug_sync"] == 1) ? TRUE : FALSE;
+    // Load devices from LibreNMS 
+    echo ($debug_sync) ? 'Debug attivo<br>Get devices from API<br>' : '';
     $jsonDecode = ApiConfig::getInstance()->executeQuery("devices");
-    if(isset($jsonDecode))
-    {
+    //echo ($debug_sync) ? 'Device ottenuti<br>' : '';
+    if (isset($jsonDecode)) {
         $decodedDevices = $jsonDecode["devices"];
         $hostnames = [];
         $devices = [];
-
         foreach ($decodedDevices as $jsonDevice) {
-            $device = NetworkDevice::createDevice($jsonDevice);
+            $device = NetworkDevice::createDevice($jsonDevice, $debug_sync);
             $devices[] = $device;
             $hostnames[] = $device->sysName;
         }
@@ -78,19 +82,23 @@ function execute() {
         echo "<h3>List of devices found in LibreNMS</h3> 
                 <table><tr><th>SysName</th><th>GlpiID</th>";
         foreach ($devices as $device) {
+            $device->checkUplinkPorts($hostnames);
             echo '<tr><td> ' . $device->sysName . ' </td><td> ' . (($device->glpiID > 0) ? $device->glpiID : 'Not found') . "</td></tr>\n";
         }
         echo "</table>";
         // Search and connect ports
         foreach ($devices as $device) {
-            $device->checkUplinkPorts($hostnames);
             foreach ($device->ports as $port) {
+                echo "<h3>" . $port->name . " on " . $port->switchHostname . "</h3><br>";
+                echo "<ul>";
                 if (isset($port->glpiPortid) && !$port->uplink) {
-                    echo "<h3>" . $port->name . " on " . $port->switchHostname . "</h3><br>";
-                    echo "<ul>";
                     foreach ($port->connectedTo as $connectedDevice) {
                         if (isset($connectedDevice->glpiPortid)) {
-                            $result = NetworkDevice::connect($port, $connectedDevice);
+                            if ($debug_sync) {
+                                $result = NetworkDevice::connect($port, $connectedDevice);
+                            } else {
+                                $result = FALSE;
+                            }
                             switch ($result) {
                                 case "insert":
                                     echo "<li>ADDED mac: " . $connectedDevice->mac . "</li>";
@@ -109,12 +117,13 @@ function execute() {
                             Logger::log($port, $connectedDevice, "not found");
                         }
                     }
-                    echo "</ul>";
+                } elseif ($port->uplink) {
+                    echo "<li>UPLINK port connected to: " . $port->uplinkHostname . "</li>";
                 }
+                echo "</ul>";
             }
         }
-    }
-    else{
+    } else {
         echo "<a href='../config.php'><h4>Something goes wrong. Check the configuration</h4></a>";
     }
 }

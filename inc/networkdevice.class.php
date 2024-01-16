@@ -14,8 +14,12 @@ class NetworkDevice {
     var $hardware;
     var $SNMPcommunity;
     var $ports = [];
+    var $debug_sync = FALSE;
 
-    function __construct($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity) {
+    function __construct($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity, $debug_sync = FALSE) {
+        if ($debug_sync) {
+            $this->debug_sync = TRUE;
+        }
         $this->SNMPcommunity = $SNMPcommunity;
         $this->hostname = $hostname;
         $this->id = $id;
@@ -30,7 +34,7 @@ class NetworkDevice {
 
     private function findGlpiId() {
         $networkDevice = new NetworkEquipment();
-        $fields = $networkDevice->find("name = " . "'" . $this->sysName . "'");
+        $fields = $networkDevice->find(array("name = " . "'" . $this->sysName . "'"));
 
         foreach ($fields as $field) {
             if (isset($field["id"])) {
@@ -41,7 +45,7 @@ class NetworkDevice {
         }
     }
 
-    static function createDevice($jsonDevice): NetworkDevice {
+    static function createDevice($jsonDevice, $debug_sync = FALSE): NetworkDevice {
         $hostname = "";
         $id = "";
         $sysName = "";
@@ -76,7 +80,7 @@ class NetworkDevice {
             }
         }
 
-        return new NetworkDevice($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity);
+        return new NetworkDevice($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity, $debug_sync);
     }
 
     private function findPorts(): void {

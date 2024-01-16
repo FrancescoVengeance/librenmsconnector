@@ -63,6 +63,9 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
 
 function execute() {
     // Enable degug mode
+    if (!isset($_POST["debug_sync"])) {
+        $_POST["debug_sync"] = 0;
+    }
     $debug_sync = ($_POST["debug_sync"] == 1) ? TRUE : FALSE;
     // Load devices from LibreNMS 
     echo ($debug_sync) ? 'Debug attivo<br>Get devices from API<br>' : '';
